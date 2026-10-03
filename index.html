@@ -65,8 +65,25 @@ input[type=date],input[type=time]{font-family:inherit;font-size:clamp(16px,2.6vh
 .ev{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--bg);border:2.5px solid var(--ink);border-radius:16px;padding:clamp(5px,1.1vh,9px) 12px;font-size:clamp(14px,2.3vh,18px);text-align:left}
 .ev small{display:inline;margin-left:6px;opacity:.65;font-size:clamp(11px,1.7vh,13px)}
 .ev strong{font-weight:400;white-space:nowrap;color:var(--pink)}
-#mute{position:fixed;top:max(14px,env(safe-area-inset-top));right:18px;z-index:70;width:42px;height:42px;padding:0;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;background:#fff}
+#mute,#theme{position:fixed;top:max(14px,env(safe-area-inset-top));right:18px;z-index:70;width:42px;height:42px;padding:0;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;background:#fff}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.opt{position:relative;text-align:center;padding:0 1px}
+.opt.rec::after{content:'⭐';position:absolute;top:0;right:2px;font-size:10px}
+.g7{grid-template-columns:repeat(7,1fr);grid-template-rows:repeat(6,1fr);gap:clamp(3px,.7vh,6px)}
+.g7 .opt{font-size:clamp(9px,1.4vh,12px);border-radius:12px}
+.g7 .opt b{font-size:clamp(16px,2.8vh,24px)}
+#theme{right:68px}
+:root[data-theme=mint]{--bg:#DDF7EC;--pink:#12A37A}
+:root[data-theme=lavender]{--bg:#ECE5FF;--pink:#7C5CFF;--violet:#FF5C8A}
+:root[data-theme=sky]{--bg:#DDF0FF;--pink:#2F8CFF}
+:root[data-theme=peach]{--bg:#FFE9D6;--pink:#F4602B}
+#roll{position:fixed;inset:0;z-index:90;background:#2B1B3DCC;display:flex;align-items:center;justify-content:center;padding:14px}
+#roll[hidden]{display:none}
+.rc{background:#fff;border:3px solid var(--ink);border-radius:26px;box-shadow:5px 5px 0 var(--ink);width:100%;max-width:440px;padding:clamp(12px,2.4vh,22px) 14px;display:flex;flex-direction:column;gap:clamp(6px,1.4vh,12px);text-align:center}
+.rr{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--bg);border:2.5px solid var(--ink);border-radius:16px;padding:clamp(8px,1.6vh,14px) 14px;font-size:clamp(17px,3vh,24px)}
+.rr b{font-weight:400}
+.rr.spin{background:var(--sun)}
+.rr.lock{background:#fff;border-color:var(--pink)}
 </style>
 </head>
 <body>
@@ -94,7 +111,7 @@ input[type=date],input[type=time]{font-family:inherit;font-size:clamp(16px,2.6vh
     <input type="date" id="date" aria-label="날짜">
     <input type="time" id="time" value="14:00" aria-label="시간">
   </div>
-  <div class="bar"><button class="next" id="to2">다음 👉</button></div>
+  <div class="bar"><button class="ghost" id="rollBtn">🎰 전체 랜덤!</button><button class="next" id="to2">다음 👉</button></div>
 </section>
 
 <section class="step" id="s2">
@@ -107,14 +124,15 @@ input[type=date],input[type=time]{font-family:inherit;font-size:clamp(16px,2.6vh
 <section class="step" id="s3">
   <div class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
   <h2>😋 뭐 먹을까?</h2>
-  <div class="grid g6" id="foodGrid"></div>
+  <p class="sub" id="slotNote"></p>
+  <div class="grid g7" id="foodGrid"></div>
   <div class="bar"><button class="ghost" id="rndFood">🎲 랜덤</button><button class="next" id="to4">다음 👉</button></div>
 </section>
 
 <section class="step" id="s4">
   <div class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
   <h2>🎉 식사 후 2차는?</h2>
-  <div class="grid g6" id="afterGrid"></div>
+  <div class="grid g7" id="afterGrid"></div>
   <div class="bar"><button class="ghost" id="rndAfter">🎲 랜덤</button><button class="next" id="to5">완성! 🎉</button></div>
 </section>
 
@@ -137,6 +155,15 @@ input[type=date],input[type=time]{font-family:inherit;font-size:clamp(16px,2.6vh
   <h2>💕 우리 기념일</h2><div id="mtop"></div><div id="mlist"></div>
   <button class="next" id="mclose">닫기 ✖️</button>
 </div></div>
+<div id="roll" hidden><div class="rc">
+  <h2>🎰 전체 랜덤!</h2>
+  <div class="rr"><span>📅 날짜</span><b id="r0">❔</b></div>
+  <div class="rr"><span>⏰ 시간</span><b id="r1">❔</b></div>
+  <div class="rr"><span>📍 장소</span><b id="r2">❔</b></div>
+  <div class="rr"><span>🍽️ 음식</span><b id="r3">❔</b></div>
+  <div class="rr"><span>🎉 2차</span><b id="r4">❔</b></div>
+</div></div>
+<button id="theme" aria-label="테마 색 바꾸기">🎨</button>
 <button id="mute" aria-label="소리 끄기">🔊</button>
 <div id="toast"></div>
 
@@ -151,20 +178,20 @@ const PLACES=[
  {e:'🎓',n:'신촌'},{e:'🎭',n:'대학로'},{e:'🛒',n:'동대문'},{e:'🚉',n:'용산'},{e:'🗼',n:'남산'}
 ];
 const FOODS=[
- {e:'🍕',n:'피자'},{e:'🍔',n:'햄버거'},{e:'🍝',n:'파스타'},{e:'🥩',n:'스테이크'},{e:'🍣',n:'초밥'},
- {e:'🍜',n:'라멘'},{e:'🌶️',n:'마라탕'},{e:'🥞',n:'브런치'},{e:'🍗',n:'치킨'},{e:'🥓',n:'삼겹살'},
- {e:'🍢',n:'떡볶이'},{e:'🔥',n:'곱창'},{e:'🍲',n:'샤브샤브'},{e:'🍲',n:'쌀국수'},{e:'🌮',n:'타코'},
- {e:'🍛',n:'카레'},{e:'🍱',n:'돈까스'},{e:'🐔',n:'찜닭'},{e:'🍢',n:'양꼬치'},{e:'🥘',n:'부대찌개'},
- {e:'🍜',n:'냉면'},{e:'🍚',n:'국밥'},{e:'🍖',n:'갈비'},{e:'🐟',n:'회'},{e:'🍳',n:'닭갈비'},
- {e:'🥟',n:'딤섬'},{e:'🍤',n:'팟타이'},{e:'🥪',n:'샌드위치'},{e:'🐙',n:'쭈꾸미'},{e:'🍲',n:'감자탕'}
+ {e:'🍝',n:'파스타'},{e:'🍕',n:'피자'},{e:'🍚',n:'리조또'},{e:'🥞',n:'브런치'},{e:'🥗',n:'샐러드'},{e:'🥪',n:'샌드위치'},{e:'🥯',n:'베이글'},
+ {e:'🧇',n:'와플'},{e:'🥐',n:'크로플'},{e:'🥞',n:'팬케이크'},{e:'🍣',n:'초밥'},{e:'🍜',n:'라멘'},{e:'🍜',n:'쌀국수'},{e:'🍤',n:'팟타이'},
+ {e:'🌶️',n:'마라탕'},{e:'🍲',n:'샤브샤브'},{e:'🍢',n:'떡볶이'},{e:'🥟',n:'딤섬'},{e:'🌮',n:'타코'},{e:'🍛',n:'카레'},{e:'🍱',n:'돈까스'},
+ {e:'🥩',n:'스테이크'},{e:'🍔',n:'햄버거'},{e:'🍗',n:'치킨'},{e:'🐔',n:'찜닭'},{e:'🍳',n:'닭갈비'},{e:'🥓',n:'삼겹살'},{e:'🍢',n:'양꼬치'},
+ {e:'🥔',n:'뇨끼'},{e:'🧀',n:'그라탕'},{e:'🫕',n:'퐁듀'},{e:'🥗',n:'포케'},{e:'🍚',n:'비빔밥'},{e:'🍙',n:'김밥'},{e:'🍜',n:'칼국수'},
+ {e:'🍜',n:'냉면'},{e:'🦐',n:'감바스'},{e:'🥘',n:'빠에야'},{e:'🍽️',n:'오마카세'},{e:'🍴',n:'뷔페'},{e:'🍱',n:'한정식'},{e:'🍣',n:'연어'}
 ];
 const AFTER=[
- {e:'☕',n:'카페'},{e:'🍰',n:'디저트'},{e:'🎲',n:'보드게임'},{e:'🎬',n:'영화'},{e:'🔐',n:'방탈출'},
- {e:'🖼️',n:'전시'},{e:'🎤',n:'노래방'},{e:'🎳',n:'볼링'},{e:'🍻',n:'술 한잔'},{e:'📸',n:'인생네컷'},
- {e:'🛍️',n:'쇼핑'},{e:'🚶',n:'산책'},{e:'🌃',n:'야경'},{e:'🕹️',n:'오락실'},{e:'🎁',n:'팝업'},
- {e:'📚',n:'서점'},{e:'🎨',n:'공방'},{e:'🎱',n:'당구'},{e:'📖',n:'만화카페'},{e:'🧺',n:'한강'},
- {e:'🧗',n:'클라이밍'},{e:'⛳',n:'골프'},{e:'🎡',n:'놀이공원'},{e:'🐠',n:'수족관'},{e:'♨️',n:'찜질방'},
- {e:'🎭',n:'공연'},{e:'🏓',n:'탁구'},{e:'🌆',n:'전망대'},{e:'💐',n:'꽃집'},{e:'🍷',n:'와인바'}
+ {e:'☕',n:'카페'},{e:'🍰',n:'디저트'},{e:'🎂',n:'케이크'},{e:'🍬',n:'마카롱'},{e:'🍧',n:'빙수'},{e:'🍦',n:'아이스크림'},{e:'📸',n:'인생네컷'},
+ {e:'🖼️',n:'사진관'},{e:'👘',n:'한복'},{e:'🎨',n:'전시'},{e:'🎁',n:'팝업'},{e:'🛍️',n:'쇼핑'},{e:'💄',n:'뷰티샵'},{e:'🧸',n:'소품샵'},
+ {e:'📚',n:'서점'},{e:'📖',n:'북카페'},{e:'💐',n:'꽃집'},{e:'🏺',n:'공방'},{e:'🧴',n:'향수'},{e:'🕯️',n:'캔들'},{e:'🎬',n:'영화'},
+ {e:'🎭',n:'뮤지컬'},{e:'🔐',n:'방탈출'},{e:'🎲',n:'보드게임'},{e:'🎤',n:'노래방'},{e:'🕹️',n:'오락실'},{e:'🚶',n:'산책'},{e:'🌃',n:'야경'},
+ {e:'🌉',n:'한강'},{e:'🌆',n:'전망대'},{e:'🚗',n:'드라이브'},{e:'🎡',n:'놀이공원'},{e:'🐠',n:'수족관'},{e:'🐱',n:'동물카페'},{e:'💆',n:'스파'},
+ {e:'♨️',n:'찜질방'},{e:'💅',n:'네일'},{e:'🍷',n:'와인바'},{e:'🍸',n:'칵테일'},{e:'🛋️',n:'룸카페'},{e:'🧺',n:'피크닉'},{e:'🔭',n:'천문대'}
 ];
 
 /* ===== 공통 ===== */
@@ -222,6 +249,7 @@ function sfx(k){
   if(muted||!AC||AC.state!=='running')return;
   const t=AC.currentTime;
   if(k==='tap')tone(t,84,.08,'square',.22,sfxG);
+  else if(k==='tick')tone(t,96,.035,'square',.1,sfxG);
   else if(k==='pick'){tone(t,79,.09,'triangle',.5,sfxG);tone(t+.06,84,.12,'triangle',.5,sfxG);}
   else if(k==='yes')[72,76,79,84].forEach((m,i)=>tone(t+i*.07,m,.18,'triangle',.5,sfxG));
   else if(k==='win')[72,76,79,84,88,91].forEach((m,i)=>tone(t+i*.09,m,.28,'triangle',.5,sfxG));
@@ -356,19 +384,45 @@ const t0=new Date();t0.setDate(t0.getDate()+((6-t0.getDay()+7)%7||7));
 $('date').value=`${t0.getFullYear()}-${String(t0.getMonth()+1).padStart(2,'0')}-${String(t0.getDate()).padStart(2,'0')}`;
 $('to2').onclick=()=>{$('date').value?go(2):toast('날짜를 골라줘 📅');};
 
+/* ===== 식사 시간대 추천 (고른 시간에 맞는 메뉴를 앞으로 + ⭐) ===== */
+const SLOT={brunch:['☀️','브런치 시간'],lunch:['🍱','점심 시간'],snack:['🧁','간식 시간'],dinner:['🌙','저녁 시간'],late:['🍺','야식 시간']};
+const REC={
+ brunch:['브런치','샌드위치','베이글','와플','크로플','팬케이크','샐러드','리조또','파스타'],
+ lunch:['파스타','리조또','샐러드','포케','돈까스','카레','라멘','쌀국수','팟타이','초밥','햄버거','딤섬','칼국수','냉면','비빔밥','샌드위치'],
+ snack:['와플','크로플','팬케이크','베이글','떡볶이','샌드위치','타코','김밥','피자'],
+ dinner:['스테이크','샤브샤브','삼겹살','양꼬치','초밥','오마카세','감바스','빠에야','퐁듀','파스타','피자','마라탕','닭갈비','찜닭','한정식','연어'],
+ late:['치킨','피자','떡볶이','마라탕','닭갈비','감바스','그라탕','찜닭']
+};
+function slotOf(t){const [h,m]=(t||'14:00').split(':').map(Number),x=h*60+m;
+  return x<690?'brunch':x<870?'lunch':x<1050?'snack':x<1260?'dinner':'late';}
+const recFood=()=>REC[slotOf($('time').value)];
+
 /* ===== 선택 격자 (이벤트 위임) ===== */
-function grid(id,list,key){
+function grid(id,list,key,recFn){
   const g=$(id);
-  g.innerHTML=list.map((p,i)=>`<div class="opt" role="button" tabindex="0" data-i="${i}"><b>${p.e}</b>${p.n}</div>`).join('');
-  const mark=()=>[...g.children].forEach((c,i)=>c.classList.toggle('sel',S[key]===list[i]));
+  const mark=()=>[...g.children].forEach(c=>c.classList.toggle('sel',S[key]===list[+c.dataset.i]));
+  const render=()=>{
+    const rec=recFn?recFn():[];
+    const idx=list.map((_,i)=>i).sort((a,b)=>(rec.includes(list[b].n)?1:0)-(rec.includes(list[a].n)?1:0)||a-b);
+    g.innerHTML=idx.map(i=>`<div class="opt${rec.includes(list[i].n)?' rec':''}" role="button" tabindex="0" data-i="${i}"><b>${list[i].e}</b>${list[i].n}</div>`).join('');
+    mark();
+  };
   const pick=el=>{const o=el.closest('.opt');if(o){S[key]=list[+o.dataset.i];mark();}};
   g.onclick=e=>pick(e.target);
   g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pick(e.target);}};
-  return ()=>{S[key]=rnd(list);mark();toast('🎲 '+S[key].n+'!');};
+  render();
+  const rand=()=>{S[key]=rnd(list);mark();toast('🎲 '+S[key].n+'!');};
+  rand.render=render;
+  return rand;
 }
-const rp=grid('placeGrid',PLACES,'place'),rf=grid('foodGrid',FOODS,'food'),ra=grid('afterGrid',AFTER,'after');
+const rp=grid('placeGrid',PLACES,'place'),rf=grid('foodGrid',FOODS,'food',recFood),ra=grid('afterGrid',AFTER,'after');
 $('rndPlace').onclick=rp;$('rndFood').onclick=rf;$('rndAfter').onclick=ra;
-$('to3').onclick=()=>S.place?go(3):toast('장소를 골라줘 📍');
+$('to3').onclick=()=>{
+  if(!S.place){toast('장소를 골라줘 📍');return;}
+  const sl=SLOT[slotOf($('time').value)];
+  $('slotNote').textContent=`${sl[0]} ${sl[1]}이라 ⭐ 메뉴를 앞에 모아놨어!`;
+  rf.render();go(3);
+};
 $('to4').onclick=()=>S.food?go(4):toast('메뉴를 골라줘 😋');
 $('to5').onclick=()=>{if(!S.after){toast('2차를 골라줘 🎉');return;}showResult();go(5);burst();setTimeout(()=>sfx("win"),150);};
 
@@ -386,11 +440,11 @@ function link(){                                   /* 선택 내용이 담긴 �
 }
 function msg(){
   const f=fmt(),lk=link();
-  return `💌 효영아!! 우리 데이트 확정 💘\n\n📅 ${f.date}\n⏰ ${f.time}\n📍 ${S.place.n} ${S.place.e}\n🍽️ ${S.food.n} ${S.food.e}\n🎉 2차: ${S.after.n} ${S.after.e}\n\n${f.time}에 ${S.place.n}에서 만나! ${S.food.n} 먹고 ${S.after.n} 가자 🥰💕\n\n🗺️ https://map.kakao.com/link/search/${encodeURIComponent(S.place.n+' '+S.food.n)}`+(lk?`\n💌 ${lk}`:'');
+  return `💌 효영아!! 우리 데이트 확정 💘\n\n📅 ${f.date}\n⏰ ${f.time}\n📍 ${S.place.n} ${S.place.e}\n🍽️ ${S.food.n} ${S.food.e}\n🎉 2차: ${S.after.n} ${S.after.e}\n⏳ ${dateLeft()}\n\n${f.time}에 ${S.place.n}에서 만나! ${S.food.n} 먹고 ${S.after.n} 가자 🥰💕\n\n🗺️ https://map.kakao.com/link/search/${encodeURIComponent(S.place.n+' '+S.food.n)}`+(lk?`\n💌 ${lk}`:'');
 }
 function showResult(){
   const f=fmt();
-  $('ticket').innerHTML=`📅 ${f.date}<br>⏰ ${f.time}<br>📍 ${S.place.n} ${S.place.e}<br>🍽️ ${S.food.n} ${S.food.e}<br>🎉 2차 ${S.after.n} ${S.after.e}`;
+  $('ticket').innerHTML=`📅 ${f.date}<br>⏰ ${f.time}<br>📍 ${S.place.n} ${S.place.e}<br>🍽️ ${S.food.n} ${S.food.e}<br>🎉 2차 ${S.after.n} ${S.after.e}<br>⏳ ${dateLeft()}`;
 }
 function copyText(text,ok){
   const done=()=>toast(ok);
@@ -404,6 +458,55 @@ $('share').onclick=async()=>{
 };
 $('copy').onclick=()=>copyText(msg(),'복사 완료 📋');
 $('again').onclick=()=>{S.place=S.food=S.after=null;document.querySelectorAll('.opt.sel').forEach(o=>o.classList.remove('sel'));go(1);};
+/* ===== 데이트까지 D-N (1일 미만이면 시간으로) ===== */
+function dateLeft(){
+  const [y,m,d]=$('date').value.split('-').map(Number),[hh,mm]=($('time').value||'14:00').split(':').map(Number);
+  const tg=new Date(y,m-1,d,hh,mm),n=new Date(),ms=tg-n,days=Math.round((midnight(tg)-midnight(n))/864e5);
+  if(ms<=0)return days<0?'💝 다녀온 데이트':'🎉 오늘 데이트!';
+  if(ms<864e5){const h=Math.floor(ms/36e5),mi=Math.floor(ms%36e5/6e4);return h?`⏰ ${h}시간 ${mi}분 남음`:`⏰ ${mi}분 남음`;}
+  return `D-${days}`;
+}
+
+/* ===== 전체 랜덤: 날짜 → 시간 → 장소 → 음식 → 2차 순서로 룰렛처럼 빠르게 결정 ===== */
+const dl=ds=>{const [y,m,d]=ds.split('-').map(Number);return `${m}/${d} (${'일월화수목금토'[new Date(y,m-1,d).getDay()]})`;};
+const tl=t=>{const [h,mi]=t.split(':').map(Number);return `${h<12?'오전':'오후'} ${h%12||12}:${p2(mi)}`;};
+const rDate=()=>{const d=new Date();d.setDate(d.getDate()+1+Math.floor(Math.random()*30));return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;};
+const rTime=()=>p2(11+Math.floor(Math.random()*10))+':'+rnd(['00','30']);
+const lab=x=>x.e+' '+x.n;
+let rolling=false;
+function rollAll(){
+  if(rolling)return;rolling=true;
+  const fd=rDate(),ft=rTime(),fp=rnd(PLACES),pool=FOODS.filter(f=>REC[slotOf(ft)].includes(f.n)),ff=rnd(pool.length?pool:FOODS),fa=rnd(AFTER);
+  const stages=[
+    {id:'r0',gen:()=>dl(rDate()),fin:dl(fd),done:()=>{$('date').value=fd;}},
+    {id:'r1',gen:()=>tl(rTime()),fin:tl(ft),done:()=>{$('time').value=ft;}},
+    {id:'r2',gen:()=>lab(rnd(PLACES)),fin:lab(fp),done:()=>{S.place=fp;}},
+    {id:'r3',gen:()=>lab(rnd(FOODS)),fin:lab(ff),done:()=>{S.food=ff;}},
+    {id:'r4',gen:()=>lab(rnd(AFTER)),fin:lab(fa),done:()=>{S.after=fa;}}
+  ];
+  for(const st of stages){const el=$(st.id);el.textContent='❔';el.parentElement.className='rr';}
+  $('roll').hidden=false;
+  let i=0;
+  const next=()=>{
+    if(i>=stages.length){setTimeout(()=>{$('roll').hidden=true;rolling=false;showResult();go(5);burst();sfx('win');},550);return;}
+    const st=stages[i++],el=$(st.id),row=el.parentElement;row.classList.add('spin');
+    let n=0;
+    const iv=setInterval(()=>{
+      el.textContent=st.gen();sfx('tick');
+      if(++n>8){clearInterval(iv);el.textContent=st.fin;row.className='rr lock';st.done();sfx('pick');setTimeout(next,170);}
+    },65);
+  };
+  next();
+}
+$('rollBtn').onclick=rollAll;
+
+/* ===== 테마 색 (선택은 이 기기에 저장) ===== */
+const THEMES=['pink','mint','lavender','sky','peach'],TNAME=['핑크 💗','민트 🍃','라벤더 💜','하늘 ☁️','피치 🍑'];
+let ti=0;try{ti=Math.max(0,THEMES.indexOf(localStorage.getItem('theme')));}catch(e){}
+const setTheme=()=>{document.documentElement.dataset.theme=THEMES[ti];};
+setTheme();
+$('theme').onclick=()=>{ti=(ti+1)%THEMES.length;setTheme();try{localStorage.setItem('theme',THEMES[ti]);}catch(e){}toast('🎨 '+TNAME[ti]);};
+
 /* ===== 링크로 열면 선택 내용이 담긴 결과 화면이 바로 뜸 ===== */
 (function fromLink(){
   const q=new URLSearchParams(location.hash.slice(1));
